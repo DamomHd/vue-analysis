@@ -15,12 +15,14 @@ export function initExtend (Vue: GlobalAPI) {
 
   /**
    * Class inheritance
+   * Vue子类
    */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
     const Super = this
     const SuperId = Super.cid
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
+    //如果缓存中存在 则直接返回缓存中的Sub 不存在 则重新定义 最终缓存起来
     if (cachedCtors[SuperId]) {
       return cachedCtors[SuperId]
     }
@@ -31,6 +33,7 @@ export function initExtend (Vue: GlobalAPI) {
     }
 
     const Sub = function VueComponent (options) {
+      //Vue实例初始化
       this._init(options)
     }
     Sub.prototype = Object.create(Super.prototype)
@@ -45,9 +48,11 @@ export function initExtend (Vue: GlobalAPI) {
     // For props and computed properties, we define the proxy getters on
     // the Vue instances at extension time, on the extended prototype. This
     // avoids Object.defineProperty calls for each instance created.
+    // 初始化props
     if (Sub.options.props) {
       initProps(Sub)
     }
+    // 初始化computed
     if (Sub.options.computed) {
       initComputed(Sub)
     }
@@ -75,6 +80,7 @@ export function initExtend (Vue: GlobalAPI) {
     Sub.sealedOptions = extend({}, Sub.options)
 
     // cache constructor
+    // 缓存Sub  避免多次执行Vue.extend对同一个组件重复构造
     cachedCtors[SuperId] = Sub
     return Sub
   }

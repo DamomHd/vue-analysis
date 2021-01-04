@@ -25,6 +25,7 @@ import {
  * Option overwriting strategies are functions that handle
  * how to merge a parent option value and a child option
  * value into the final value.
+ * 合并选项策略
  */
 const strats = config.optionMergeStrategies
 
@@ -142,6 +143,13 @@ strats.data = function (
 
 /**
  * Hooks and props are merged as arrays.
+ * 合并策略 多层3元运算符
+ * 逻辑就是如果不存在 childVal ，就返回 parentVal；
+ * 否则再判断是否存在 parentVal，
+ * 如果存在就把 childVal 添加到 parentVal 后返回新数组；
+ * 否则返回 childVal 的数组。所以回到 mergeOptions 函数，
+ * 一旦 parent 和 child 都定义了相同的钩子函数，
+ * 那么它们会把 2 个钩子函数合并成一个数组。
  */
 function mergeHook (
   parentVal: ?Array<Function>,
@@ -384,6 +392,8 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
 /**
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
+ * 把 parent 和 child 这两个对象根据一些合并策略，合并成一个新对象并返回
+ * 
  */
 export function mergeOptions (
   parent: Object,
@@ -406,6 +416,7 @@ export function mergeOptions (
   // but only if it is a raw options object that isn't
   // the result of another mergeOptions call.
   // Only merged options has the _base property.
+  // 递归把 extends 和 mixins 合并到 parent 上
   if (!child._base) {
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
@@ -427,6 +438,7 @@ export function mergeOptions (
       mergeField(key)
     }
   }
+  // 对不同的 key 有着不同的合并策略
   function mergeField (key) {
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)

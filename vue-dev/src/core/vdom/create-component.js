@@ -44,6 +44,7 @@ const componentVNodeHooks = {
       const mountedNode: any = vnode // work around flow
       componentVNodeHooks.prepatch(mountedNode, mountedNode)
     } else {
+      //创建一个Vue实例 调用$mount挂载子组件
       const child = vnode.componentInstance = createComponentInstanceForVnode(
         vnode,
         activeInstance
@@ -109,9 +110,10 @@ export function createComponent (
     return
   }
 
-  const baseCtor = context.$options._base
+  const baseCtor = context.$options._base  // =》Vue  src/core/global-api/index.js
 
   // plain options object: turn it into a constructor
+  // 构建子类构造函数
   if (isObject(Ctor)) {
     Ctor = baseCtor.extend(Ctor)
   }
@@ -151,6 +153,7 @@ export function createComponent (
   resolveConstructorOptions(Ctor)
 
   // transform component v-model data into props & events
+  //包含v-model
   if (isDef(data.model)) {
     transformModel(Ctor.options, data)
   }
@@ -183,9 +186,11 @@ export function createComponent (
   }
 
   // install component management hooks onto the placeholder node
+  // 安装组件钩子函数
   installComponentHooks(data)
 
   // return a placeholder vnode
+  //实例化VNode
   const name = Ctor.options.name || tag
   const vnode = new VNode(
     `vue-component-${Ctor.cid}${name ? `-${name}` : ''}`,
@@ -204,7 +209,7 @@ export function createComponent (
 
   return vnode
 }
-
+//创建Vue实例
 export function createComponentInstanceForVnode (
   // we know it's MountedComponentVNode but flow doesn't
   vnode: any,
@@ -212,9 +217,9 @@ export function createComponentInstanceForVnode (
   parent: any
 ): Component {
   const options: InternalComponentOptions = {
-    _isComponent: true,
+    _isComponent: true,  // 表示为一个组件
     _parentVnode: vnode,
-    parent
+    parent//表示当前激活的组件实例
   }
   // check inline-template render functions
   const inlineTemplate = vnode.data.inlineTemplate
@@ -222,9 +227,9 @@ export function createComponentInstanceForVnode (
     options.render = inlineTemplate.render
     options.staticRenderFns = inlineTemplate.staticRenderFns
   }
-  return new vnode.componentOptions.Ctor(options)
+  return new vnode.componentOptions.Ctor(options)  //对应子组件的构造函数
 }
-
+// 安装组件钩子函数  =》  componentVNodeHooks 的钩子函数合并到 data.hook 中
 function installComponentHooks (data: VNodeData) {
   const hooks = data.hook || (data.hook = {})
   for (let i = 0; i < hooksToMerge.length; i++) {
@@ -236,7 +241,7 @@ function installComponentHooks (data: VNodeData) {
     }
   }
 }
-
+// 合并钩子函数
 function mergeHook (f1: any, f2: any): Function {
   const merged = (a, b) => {
     // flow complains about extra args which is why we use any

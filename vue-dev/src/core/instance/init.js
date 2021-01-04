@@ -30,10 +30,12 @@ export function initMixin (Vue: Class<Component>) {
     // a flag to avoid this being observed
     vm._isVue = true
     // merge options
+    // _isComponent为true表示为一个组件
     if (options && options._isComponent) {
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
+      //
       initInternalComponent(vm, options)
     } else {
       //合并配置
@@ -73,16 +75,18 @@ export function initMixin (Vue: Class<Component>) {
     }
   }
 }
-
+//把之前通过 createComponentInstanceForVnode 函数传入的几个参数合并到内部的选项 $options 里了
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
-  const opts = vm.$options = Object.create(vm.constructor.options)
+  const opts = vm.$options = Object.create(vm.constructor.options)  // =》vm.$options = Object.create(Sub.options)
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode
-  opts.parent = options.parent
-  opts._parentVnode = parentVnode
+
+  opts.parent = options.parent  //赋值子组件的Vue实例parent
+  opts._parentVnode = parentVnode  //赋值子组件的父VNode实例
 
   const vnodeComponentOptions = parentVnode.componentOptions
-  opts.propsData = vnodeComponentOptions.propsData
+  //保留parentVNode配置中的propsData等属性
+  opts.propsData = vnodeComponentOptions.propsData  
   opts._parentListeners = vnodeComponentOptions.listeners
   opts._renderChildren = vnodeComponentOptions.children
   opts._componentTag = vnodeComponentOptions.tag

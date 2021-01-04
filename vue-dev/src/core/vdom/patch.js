@@ -3,7 +3,7 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditTime: 2020-11-19 10:25:11
+ * @LastEditTime: 2020-11-23 19:45:43
  * @description: DOM-Diff算法 patch
  */
 
@@ -86,7 +86,7 @@ export function createPatchFunction(backend) {
       }
     }
   }
-
+  // oldVnode转换成Vnode对象
   function emptyNodeAt(elm) {
     return new VNode(
       nodeOps.tagName(elm).toLowerCase(),
@@ -132,7 +132,7 @@ export function createPatchFunction(backend) {
   }
 
   let creatingElmInVPre = 0;
-  //创建真实Dom元素
+  //创建真实Dom元素 通过虚拟节点创建真实DOM 插入父节点
   function createElm(
     vnode,
     insertedVnodeQueue,
@@ -207,6 +207,7 @@ export function createPatchFunction(backend) {
         if (isDef(data)) {
           invokeCreateHooks(vnode, insertedVnodeQueue);
         }
+
         insert(parentElm, vnode.elm, refElm);
       }
 
@@ -221,7 +222,7 @@ export function createPatchFunction(backend) {
       insert(parentElm, vnode.elm, refElm);
     }
   }
-  //创建组件
+  //创建子组件
   function createComponent(vnode, insertedVnodeQueue, parentElm, refElm) {
     let i = vnode.data;
     if (isDef(i)) {
@@ -290,7 +291,7 @@ export function createPatchFunction(backend) {
     // a reactivated keep-alive component doesn't insert itself
     insert(parentElm, vnode.elm, refElm);
   }
-  //插入
+  //插入 父节点  vnode先子后父
   function insert(parent, elm, ref) {
     if (isDef(parent)) {
       if (isDef(ref)) {
@@ -302,7 +303,7 @@ export function createPatchFunction(backend) {
       }
     }
   }
-  //创建子节点
+  //创建子元素
   function createChildren(vnode, children, insertedVnodeQueue) {
     //如果是数组  
     if (Array.isArray(children)) {
@@ -311,6 +312,7 @@ export function createPatchFunction(backend) {
       }
       //递归创建元素
       for (let i = 0; i < children.length; ++i) {
+        //遍历中把vnode.elm作为父容器的DOM节点占位符传入
         createElm(
           children[i],
           insertedVnodeQueue,
@@ -338,7 +340,7 @@ export function createPatchFunction(backend) {
     }
     return isDef(vnode.tag);
   }
-
+  // 执行所有的create钩子 并把vnode push到insertedVnodeQueue
   function invokeCreateHooks(vnode, insertedVnodeQueue) {
     for (let i = 0; i < cbs.create.length; ++i) {
       cbs.create[i](emptyNode, vnode);
