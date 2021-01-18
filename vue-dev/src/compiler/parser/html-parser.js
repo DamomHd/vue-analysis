@@ -14,16 +14,23 @@ import { isNonPhrasingTag } from 'web/compiler/util'
 import { unicodeRegExp } from 'core/util/lang'
 
 // Regular Expressions for parsing tags and attributes
+// 标签属性
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
+// 自定义指令
 const dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+?\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 const ncname = `[a-zA-Z_][\\-\\.0-9_a-zA-Z${unicodeRegExp.source}]*`
 const qnameCapture = `((?:${ncname}\\:)?${ncname})`
+// 标签开始
 const startTagOpen = new RegExp(`^<${qnameCapture}`)
+// 标签闭合
 const startTagClose = /^\s*(\/?)>/
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
+// 文档类型声明
 const doctype = /^<!DOCTYPE [^>]+>/i
 // #7298: escape - to avoid being passed as HTML comment when inlined in page
+// html注释正则
 const comment = /^<!\--/
+//条件注释，例如<!-- [if !IE]> -->我是注释<!--< ![endif] -->
 const conditionalComment = /^<!\[/
 
 // Special Elements (can contain anything)
@@ -50,7 +57,12 @@ function decodeAttr (value, shouldDecodeNewlines) {
   const re = shouldDecodeNewlines ? encodedAttrWithNewLines : encodedAttr
   return value.replace(re, match => decodingMap[match])
 }
-
+/**
+ * @description: 对函数进行解析 根据信息进行对应的文本或者过滤器调用相应解析器进行解析
+ * @param {*} html
+ * @param {*} options
+ * @return {*}
+ */
 export function parseHTML (html, options) {
   const stack = []
   const expectHTML = options.expectHTML
@@ -66,18 +78,23 @@ export function parseHTML (html, options) {
       if (textEnd === 0) {
         // Comment:
         if (comment.test(html)) {
+          // 查找注释闭合
           const commentEnd = html.indexOf('-->')
 
           if (commentEnd >= 0) {
+            // 判断options 是否保留闭合
             if (options.shouldKeepComment) {
+              // 若保留注释，则把注释截取出来传给options.comment，创建注释类型的AST节点
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+            // 不保留注释则将游标移动到 -->之后 继续向后解析
             advance(commentEnd + 3)
             continue
           }
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
+        // 是否为条件注释 田间处理与解析注释一致
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
@@ -95,6 +112,7 @@ export function parseHTML (html, options) {
         }
 
         // End tag:
+        // 解析结束标签
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
@@ -104,6 +122,7 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
+        // 解析开始标签
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
@@ -178,12 +197,20 @@ export function parseHTML (html, options) {
 
   // Clean up any remaining tags
   parseEndTag()
-
+  /**
+   * @description: 移动解析游标
+   * @param {*} n 解析游标
+   * @return {*}
+   */
   function advance (n) {
     index += n
     html = html.substring(n)
   }
-
+  /**
+   * @description: 开始标签解析
+   * @param {*}
+   * @return {*}
+   */
   function parseStartTag () {
     const start = html.match(startTagOpen)
     if (start) {
@@ -194,12 +221,14 @@ export function parseHTML (html, options) {
       }
       advance(start[0].length)
       let end, attr
+      // 不符合开始标签特征 符合标签属性特征
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
         attr.start = index
         advance(attr[0].length)
         attr.end = index
         match.attrs.push(attr)
       }
+      // 标签为自闭和标签
       if (end) {
         match.unarySlash = end[1]
         advance(end[0].length)
@@ -208,10 +237,14 @@ export function parseHTML (html, options) {
       }
     }
   }
-
+  /**
+   * @description: 处理提取出来的标签属性数组
+   * @param {*} match
+   * @return {*}
+   */
   function handleStartTag (match) {
-    const tagName = match.tagName
-    const unarySlash = match.unarySlash
+    const tagName = match.tagName //开始标签标签名
+    const unarySlash = match.unarySlash //是否为闭合标签
 
     if (expectHTML) {
       if (lastTag === 'p' && isNonPhrasingTag(tagName)) {
@@ -222,10 +255,10 @@ export function parseHTML (html, options) {
       }
     }
 
-    const unary = isUnaryTag(tagName) || !!unarySlash
+    const unary = isUnaryTag(tagName) || !!unarySlash // 是否为自闭合标签
 
-    const l = match.attrs.length
-    const attrs = new Array(l)
+    const l = match.attrs.length // 属性数组长度
+    const attrs = new Array(l) // 与match.attrs数组长度相等的数组
     for (let i = 0; i < l; i++) {
       const args = match.attrs[i]
       const value = args[3] || args[4] || args[5] || ''
