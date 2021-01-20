@@ -70,13 +70,15 @@ export function parseHTML (html, options) {
   const canBeLeftOpenTag = options.canBeLeftOpenTag || no
   let index = 0
   let last, lastTag
+  //html为空则循环结束 即parse完毕   
   while (html) {
     last = html
     // Make sure we're not in a plaintext content element like script/style
+    // 确保即将parse的内容不是在纯文本标签内容里(script/style)
     if (!lastTag || !isPlainTextElement(lastTag)) {
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
-        // Comment:
+        // Comment: 是否是注释
         if (comment.test(html)) {
           // 查找注释闭合
           const commentEnd = html.indexOf('-->')
@@ -94,7 +96,7 @@ export function parseHTML (html, options) {
         }
 
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
-        // 是否为条件注释 田间处理与解析注释一致
+        //是否是条件注释
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
 
@@ -105,6 +107,7 @@ export function parseHTML (html, options) {
         }
 
         // Doctype:
+        // 是否是DOCTYPE
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
@@ -112,7 +115,7 @@ export function parseHTML (html, options) {
         }
 
         // End tag:
-        // 解析结束标签
+        // 是否是结束标签
         const endTagMatch = html.match(endTag)
         if (endTagMatch) {
           const curIndex = index
@@ -122,7 +125,7 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
-        // 解析开始标签
+        // 是否是开始标签
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
@@ -134,6 +137,7 @@ export function parseHTML (html, options) {
       }
 
       let text, rest, next
+      //非<开头 则解析文本类型
       if (textEnd >= 0) {
         rest = html.slice(textEnd)
         while (
@@ -150,19 +154,20 @@ export function parseHTML (html, options) {
         }
         text = html.substring(0, textEnd)
       }
-
+      //字符串中未找到< 则为纯文本
       if (textEnd < 0) {
         text = html
       }
-
+     
       if (text) {
         advance(text.length)
       }
-
+      // 把截取出来的text转成textAST
       if (options.chars && text) {
         options.chars(text, index - text.length, index)
       }
     } else {
+      // 父元素为script、style、textarea时，其内部的内容全部当做纯文本处理
       let endTagLength = 0
       const stackedTag = lastTag.toLowerCase()
       const reStackedTag = reCache[stackedTag] || (reCache[stackedTag] = new RegExp('([\\s\\S]*?)(</' + stackedTag + '[^>]*>)', 'i'))
@@ -185,7 +190,7 @@ export function parseHTML (html, options) {
       html = rest
       parseEndTag(stackedTag, index - endTagLength, index)
     }
-
+    // 整个字符串作为文本处理
     if (html === last) {
       options.chars && options.chars(html)
       if (process.env.NODE_ENV !== 'production' && !stack.length && options.warn) {
@@ -206,11 +211,7 @@ export function parseHTML (html, options) {
     index += n
     html = html.substring(n)
   }
-  /**
-   * @description: 开始标签解析
-   * @param {*}
-   * @return {*}
-   */
+  // parse 开始标签
   function parseStartTag () {
     const start = html.match(startTagOpen)
     if (start) {
@@ -237,11 +238,7 @@ export function parseHTML (html, options) {
       }
     }
   }
-  /**
-   * @description: 处理提取出来的标签属性数组
-   * @param {*} match
-   * @return {*}
-   */
+  // 处理 pareStartTag结果
   function handleStartTag (match) {
     const tagName = match.tagName //开始标签标签名
     const unarySlash = match.unarySlash //是否为闭合标签
@@ -284,13 +281,22 @@ export function parseHTML (html, options) {
       options.start(tagName, attrs, unary, match.start, match.end)
     }
   }
-
+  // parse 结束标签
+  /**
+   * @description: 
+   * @param {*} tagName 标签名
+   * @param {*} start 起始位置
+   * @param {*} end 结束位置
+   * @return {*}
+   * @Date: 2021-01-18 10:53:23
+   */
   function parseEndTag (tagName, start, end) {
     let pos, lowerCasedTagName
     if (start == null) start = index
     if (end == null) end = index
 
     // Find the closest opened tag of the same type
+    // tagName存在 从后往前遍历 寻找相同标签 记录位置pos 
     if (tagName) {
       lowerCasedTagName = tagName.toLowerCase()
       for (pos = stack.length - 1; pos >= 0; pos--) {
@@ -300,9 +306,10 @@ export function parseHTML (html, options) {
       }
     } else {
       // If no tag name is provided, clean shop
+      // 不存在 pos置为0
       pos = 0
     }
-
+    // pos大于0 从后向前遍历直到pos处 
     if (pos >= 0) {
       // Close all the open elements, up the stack
       for (let i = stack.length - 1; i >= pos; i--) {
@@ -315,6 +322,7 @@ export function parseHTML (html, options) {
             { start: stack[i].start, end: stack[i].end }
           )
         }
+        // 调用 立即将其闭合
         if (options.end) {
           options.end(stack[i].tag, start, end)
         }

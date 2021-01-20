@@ -1,11 +1,11 @@
 /* @flow */
 
-import { makeMap, isBuiltInTag, cached, no } from 'shared/util'
+import { makeMap, isBuiltInTag, cached, no } from "shared/util";
 
-let isStaticKey
-let isPlatformReservedTag
+let isStaticKey;
+let isPlatformReservedTag;
 
-const genStaticKeysCached = cached(genStaticKeys)
+const genStaticKeysCached = cached(genStaticKeys);
 
 /**
  * Goal of the optimizer: walk the generated template AST tree
@@ -17,112 +17,136 @@ const genStaticKeysCached = cached(genStaticKeys)
  * 1. Hoist them into constants, so that we no longer need to
  *    create fresh nodes for them on each re-render;
  * 2. Completely skip them in the patching process.
+ * 优化AST
  */
-export function optimize (root: ?ASTElement, options: CompilerOptions) {
-  if (!root) return
-  isStaticKey = genStaticKeysCached(options.staticKeys || '')
-  isPlatformReservedTag = options.isReservedTag || no
+
+export function optimize(root: ?ASTElement, options: CompilerOptions) {
+  if (!root) return;
+  isStaticKey = genStaticKeysCached(options.staticKeys || "");
+  isPlatformReservedTag = options.isReservedTag || no;
   // first pass: mark all non-static nodes.
-  markStatic(root)
+  // 标记静态节点
+  markStatic(root);
   // second pass: mark static roots.
-  markStaticRoots(root, false)
+  //标记静态根节点
+  markStaticRoots(root, false);
 }
 
-function genStaticKeys (keys: string): Function {
+function genStaticKeys(keys: string): Function {
   return makeMap(
-    'type,tag,attrsList,attrsMap,plain,parent,children,attrs,start,end,rawAttrsMap' +
-    (keys ? ',' + keys : '')
-  )
+    "type,tag,attrsList,attrsMap,plain,parent,children,attrs,start,end,rawAttrsMap" +
+      (keys ? "," + keys : "")
+  );
 }
-
-function markStatic (node: ASTNode) {
-  node.static = isStatic(node)
+// 标记静态节点
+function markStatic(node: ASTNode) {
+  node.static = isStatic(node);
+  // 元素节点
   if (node.type === 1) {
     // do not make component slot content static. this avoids
     // 1. components not able to mutate slot nodes
     // 2. static slot content fails for hot-reloading
     if (
       !isPlatformReservedTag(node.tag) &&
-      node.tag !== 'slot' &&
-      node.attrsMap['inline-template'] == null
+      node.tag !== "slot" &&
+      node.attrsMap["inline-template"] == null
     ) {
-      return
+      return;
     }
     for (let i = 0, l = node.children.length; i < l; i++) {
-      const child = node.children[i]
-      markStatic(child)
+      const child = node.children[i];
+      markStatic(child);
+      // 子节点有一个非静态节点 则需要将当前节点重新设置为非静态节点
       if (!child.static) {
-        node.static = false
+        node.static = false;
       }
     }
     if (node.ifConditions) {
       for (let i = 1, l = node.ifConditions.length; i < l; i++) {
-        const block = node.ifConditions[i].block
-        markStatic(block)
+        const block = node.ifConditions[i].block;
+        markStatic(block);
         if (!block.static) {
-          node.static = false
+          node.static = false;
         }
       }
     }
   }
 }
-
-function markStaticRoots (node: ASTNode, isInFor: boolean) {
+//标记静态根节点
+function markStaticRoots(node: ASTNode, isInFor: boolean) {
   if (node.type === 1) {
     if (node.static || node.once) {
-      node.staticInFor = isInFor
+      node.staticInFor = isInFor;
     }
     // For a node to qualify as a static root, it should have children that
     // are not just static text. Otherwise the cost of hoisting out will
     // outweigh the benefits and it's better off to just always render it fresh.
-    if (node.static && node.children.length && !(
-      node.children.length === 1 &&
-      node.children[0].type === 3
-    )) {
-      node.staticRoot = true
-      return
+    if (
+      node.static &&
+      node.children.length &&
+      !(node.children.length === 1 && node.children[0].type === 3)
+    ) {
+      node.staticRoot = true;
+      return;
     } else {
-      node.staticRoot = false
+      node.staticRoot = false;
     }
     if (node.children) {
       for (let i = 0, l = node.children.length; i < l; i++) {
-        markStaticRoots(node.children[i], isInFor || !!node.for)
+        markStaticRoots(node.children[i], isInFor || !!node.for);
       }
     }
     if (node.ifConditions) {
       for (let i = 1, l = node.ifConditions.length; i < l; i++) {
-        markStaticRoots(node.ifConditions[i].block, isInFor)
+        markStaticRoots(node.ifConditions[i].block, isInFor);
       }
     }
   }
 }
 
-function isStatic (node: ASTNode): boolean {
-  if (node.type === 2) { // expression
-    return false
+function isStatic(node: ASTNode): boolean {
+  // 包含变量的动态文本节点
+  if (node.type === 2) {
+    // expression
+    return false;
   }
-  if (node.type === 3) { // text
-    return true
+  // 不包含变量的纯文本节点
+  if (node.type === 3) {
+    // text
+    return true;
   }
-  return !!(node.pre || (
-    !node.hasBindings && // no dynamic bindings
-    !node.if && !node.for && // not v-if or v-for or v-else
-    !isBuiltInTag(node.tag) && // not a built-in
-    isPlatformReservedTag(node.tag) && // not a component
-    !isDirectChildOfTemplateFor(node) &&
-    Object.keys(node).every(isStaticKey)
-  ))
+  // type == 1 元素节点 进一步判断
+  /**
+   * 1.使用了v-pre 断定为静态节点
+   * 2.没使用v-pre 需满足几个条件才是静态节点
+   *   不能使用动态绑定语法 标签不能包含 v-  @  :开头的属性
+   *   不能使用v-for  v-else  v-for指令
+   *   不能是内置组件 标签不能是slot或者component
+   *   标签名为保留标签 不能是组件
+   *   当前节点不能是带有v-for的template标签
+   *   节点所属的key必须是静态节点才有的key （只能是type/tag/attrsList/attrsMap/plain/children/attrs之一）
+   */
+  return !!(
+    node.pre ||
+    (!node.hasBindings && // no dynamic bindings 不包含bind
+      !node.if &&
+      !node.for && // not v-if or v-for or v-else  不包含 v-if/for/else
+      !isBuiltInTag(node.tag) && // not a built-in
+      isPlatformReservedTag(node.tag) && // not a component
+      !isDirectChildOfTemplateFor(node) &&
+      Object.keys(node).every(isStaticKey))
+  );
 }
 
-function isDirectChildOfTemplateFor (node: ASTElement): boolean {
+function isDirectChildOfTemplateFor(node: ASTElement): boolean {
   while (node.parent) {
-    node = node.parent
-    if (node.tag !== 'template') {
-      return false
+    node = node.parent;
+    if (node.tag !== "template") {
+      return false;
     }
     if (node.for) {
-      return true
+      return true;
     }
   }
-  return false
+  return false;
 }
