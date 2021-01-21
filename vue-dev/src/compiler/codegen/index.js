@@ -39,12 +39,17 @@ export type CodegenResult = {
   render: string,
   staticRenderFns: Array<string>
 };
-
+/**
+ * @description: AST转render
+ * @param {*} 传入优化后的AST 
+ * @return {*}
+ */
 export function generate (
   ast: ASTElement | void,
   options: CompilerOptions
 ): CodegenResult {
   const state = new CodegenState(options)
+  // ast不为空调用genElement 否则船舰一个空的元素型VNode
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
     render: `with(this){return ${code}}`,
@@ -56,17 +61,22 @@ export function genElement (el: ASTElement, state: CodegenState): string {
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
   }
-
+  // 静态根节点
   if (el.staticRoot && !el.staticProcessed) {
     return genStatic(el, state)
+  // v-once 
   } else if (el.once && !el.onceProcessed) {
     return genOnce(el, state)
+  // v-for
   } else if (el.for && !el.forProcessed) {
     return genFor(el, state)
+  // v-if
   } else if (el.if && !el.ifProcessed) {
     return genIf(el, state)
+  // template 模板标签
   } else if (el.tag === 'template' && !el.slotTarget && !state.pre) {
     return genChildren(el, state) || 'void 0'
+  // slot 插槽
   } else if (el.tag === 'slot') {
     return genSlot(el, state)
   } else {
@@ -115,6 +125,12 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 }
 
 // v-once
+/**
+ * @description: 只渲染元素喝组件一次 之后视为静态节点
+ * @param {*} el
+ * @param {*} state
+ * @return {*}
+ */
 function genOnce (el: ASTElement, state: CodegenState): string {
   el.onceProcessed = true
   if (el.if && !el.ifProcessed) {
@@ -215,7 +231,12 @@ export function genFor (
       `return ${(altGen || genElement)(el, state)}` +
     '})'
 }
-
+/**
+ * @description: 获取节点属性data
+ * @param {*} el
+ * @param {*} state
+ * @return {*}
+ */
 export function genData (el: ASTElement, state: CodegenState): string {
   let data = '{'
 
@@ -459,7 +480,11 @@ function genScopedSlot (
   const reverseProxy = slotScope ? `` : `,proxy:true`
   return `{key:${el.slotTarget || `"default"`},fn:${fn}${reverseProxy}}`
 }
-
+/**
+ * @description: 获取子节点列表
+ * @param {*}
+ * @return {*}
+ */
 export function genChildren (
   el: ASTElement,
   state: CodegenState,
@@ -531,14 +556,23 @@ function genNode (node: ASTNode, state: CodegenState): string {
     return genText(node)
   }
 }
-
+/**
+ * @description: 文本节点
+ * @param {*} text
+ * @return {*}
+ */
 export function genText (text: ASTText | ASTExpression): string {
+  // 动态文本实用ast的expression 静态文本使用text
   return `_v(${text.type === 2
     ? text.expression // no need for () because already wrapped in _s()
     : transformSpecialNewlines(JSON.stringify(text.text))
   })`
 }
-
+/**
+ * @description: 注释节点
+ * @param {*} comment
+ * @return {*}
+ */
 export function genComment (comment: ASTText): string {
   return `_e(${JSON.stringify(comment.text)})`
 }

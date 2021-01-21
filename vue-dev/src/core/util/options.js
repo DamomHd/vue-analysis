@@ -392,8 +392,12 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
 /**
  * Merge two option objects into a new one.
  * Core utility used in both instantiation and inheritance.
- * 把 parent 和 child 这两个对象根据一些合并策略，合并成一个新对象并返回
  * 
+ */
+/**
+ * @description: 把 parent 和 child 这两个对象根据一些合并策略，合并成一个新对象并返回
+ * @param {*}
+ * @return {*}
  */
 export function mergeOptions (
   parent: Object,
@@ -430,15 +434,17 @@ export function mergeOptions (
 
   const options = {}
   let key
+  // 将parent每一项合并到options上
   for (key in parent) {
     mergeField(key)
   }
+  // 遍历child 将存在于child不在parent上的属性继续调用mergeField函数合并到options
   for (key in child) {
     if (!hasOwn(parent, key)) {
       mergeField(key)
     }
   }
-  // 对不同的 key 有着不同的合并策略
+  // 对不同的 key 有着不同的合并策略（策略模式）
   function mergeField (key) {
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)

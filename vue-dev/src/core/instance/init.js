@@ -11,7 +11,11 @@ import { initProvide, initInjections } from './inject'
 import { extend, mergeOptions, formatComponentName } from '../util/index'
 
 let uid = 0
-
+/**
+ * @description: new Vue()后执行的函数
+ * @param {*} Vue
+ * @return {*}
+ */
 export function initMixin (Vue: Class<Component>) {
   /* new Vue 源头的开始 */ 
   Vue.prototype._init = function (options?: Object) {
@@ -56,11 +60,11 @@ export function initMixin (Vue: Class<Component>) {
     initLifecycle(vm)  //初始化生命周期
     initEvents(vm)  //初始化事件中心
     initRender(vm) //渲染逻辑 rander
-    callHook(vm, 'beforeCreate')
-    initInjections(vm) // resolve injections before data/props   
-    initState(vm)
-    initProvide(vm) // resolve provide after data/props
-    callHook(vm, 'created')
+    callHook(vm, 'beforeCreate') // 调用生命周期钩子函数
+    initInjections(vm) // 初始化injections  resolve injections before data/props   
+    initState(vm) // 初始化props methods data computed watch
+    initProvide(vm) //初始化provide resolve provide after data/props
+    callHook(vm, 'created') // 调用生命周期钩子函数
 
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {

@@ -211,7 +211,15 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
-    //解析到开始标签
+    /**
+     * @description: 解析到开始标签
+     * @param {*} tag 标签名
+     * @param {*} attrs 标签属性
+     * @param {*} unary 标签是否闭合
+     * @param {*} start 标签起始
+     * @param {*} end 标签结尾
+     * @return {*}
+     */
     start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one

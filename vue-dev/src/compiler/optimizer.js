@@ -73,6 +73,7 @@ function markStatic(node: ASTNode) {
   }
 }
 //标记静态根节点
+
 function markStaticRoots(node: ASTNode, isInFor: boolean) {
   if (node.type === 1) {
     if (node.static || node.once) {
@@ -81,6 +82,8 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
     // For a node to qualify as a static root, it should have children that
     // are not just static text. Otherwise the cost of hoisting out will
     // outweigh the benefits and it's better off to just always render it fresh.
+    // 成为静态根节点的条件 节点自身为静态节点+需要拥有子节点children+子节点不能只有一个文本节点
+    // 否则优化成本大于优化后的效益
     if (
       node.static &&
       node.children.length &&
@@ -103,7 +106,11 @@ function markStaticRoots(node: ASTNode, isInFor: boolean) {
     }
   }
 }
-
+/**
+ * @description: 判断是否是静态节点
+ * @param {*} node
+ * @return {*}
+ */
 function isStatic(node: ASTNode): boolean {
   // 包含变量的动态文本节点
   if (node.type === 2) {
