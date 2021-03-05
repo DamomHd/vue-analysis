@@ -37,6 +37,7 @@ export function parseText (
   const rawTokens = []
   let lastIndex = tagRE.lastIndex = 0
   let match, index, tokenValue
+  // tagRE.exec 匹配不到变量文本返回null
   while ((match = tagRE.exec(text))) {
     index = match.index
     // push text token

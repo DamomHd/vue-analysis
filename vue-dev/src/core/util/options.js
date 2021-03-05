@@ -340,15 +340,25 @@ function normalizeProps (options: Object, vm: ?Component) {
 /**
  * Normalize all injections into Object-based format
  */
+/**
+ * @description: 合并属性将inject选项数据规范化  集中管理
+ * @param {*} options
+ * @param {*} vm
+ * @return {*}
+ * @Date: 2021-03-05 17:22:47
+ */
 function normalizeInject (options: Object, vm: ?Component) {
   const inject = options.inject
   if (!inject) return
   const normalized = options.inject = {}
+  //如果inject属性是个数组
   if (Array.isArray(inject)) {
     for (let i = 0; i < inject.length; i++) {
       normalized[inject[i]] = { from: inject[i] }
     }
-  } else if (isPlainObject(inject)) {
+  } 
+  //如果inject是个对象
+  else if (isPlainObject(inject)) {
     for (const key in inject) {
       const val = inject[key]
       normalized[key] = isPlainObject(val)
@@ -413,6 +423,7 @@ export function mergeOptions (
   }
 
   normalizeProps(child, vm)
+  // 合并属性将inject选项数据规范化
   normalizeInject(child, vm)
   normalizeDirectives(child)
 

@@ -765,17 +765,23 @@ function processComponent (el) {
     el.inlineTemplate = true
   }
 }
-
+/**
+ * @description: 解析标签属性
+ * @param {*} el
+ * @return {*}
+ * @Date: 2021-03-05 13:09:41
+ */
 function processAttrs (el) {
   const list = el.attrsList
   let i, l, name, rawName, value, modifiers, syncGen, isDynamic
   for (i = 0, l = list.length; i < l; i++) {
     name = rawName = list[i].name
     value = list[i].value
+    //是指令
     if (dirRE.test(name)) {
       // mark element as dynamic
       el.hasBindings = true
-      // modifiers
+      // modifiers 解析修饰符
       modifiers = parseModifiers(name.replace(dirRE, ''))
       // support .foo shorthand syntax for the .prop modifier
       if (process.env.VBIND_PROP_SHORTHAND && propBindRE.test(name)) {
@@ -784,7 +790,8 @@ function processAttrs (el) {
       } else if (modifiers) {
         name = name.replace(modifierRE, '')
       }
-      if (bindRE.test(name)) { // v-bind
+      // v-bind
+      if (bindRE.test(name)) { 
         name = name.replace(bindRE, '')
         value = parseFilters(value)
         isDynamic = dynamicArgRE.test(name)
@@ -852,7 +859,9 @@ function processAttrs (el) {
         } else {
           addAttr(el, name, value, list[i], isDynamic)
         }
-      } else if (onRE.test(name)) { // v-on
+      } 
+    // v-on
+      else if (onRE.test(name)) {
         name = name.replace(onRE, '')
         isDynamic = dynamicArgRE.test(name)
         if (isDynamic) {

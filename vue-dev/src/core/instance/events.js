@@ -1,3 +1,12 @@
+/*
+ * @Descripttion: Damom
+ * @version: v1.0
+ * @Author: hongda_huang
+ * @Date: 2020-11-20 16:54:29
+ * @LastEditTime: 2021-03-05 15:18:21
+ * @description: initEvent 初始化事件中心 实际上是初始化父组件在模板中使用的v-on 或者@注册的监听子组件内触发的事件
+ * 因为父组件给子组件的注册时间中，吧自定义事件传给了子组件，在子组件的实例化的时候才进行初始化。而浏览器原生事件是在父组件里处理的
+ */
 /* @flow */
 
 import {
@@ -13,8 +22,10 @@ export function initEvents (vm: Component) {
   vm._events = Object.create(null)
   vm._hasHookEvent = false
   // init parent attached events
+  // 获取父组件注册事件给listeners
   const listeners = vm.$options._parentListeners
   if (listeners) {
+    //存在则调用 将父组件向子组件的注册事件注册到子组件的实例中
     updateComponentListeners(vm, listeners)
   }
 }
@@ -38,7 +49,12 @@ function createOnceHandler (event, fn) {
     }
   }
 }
-
+/**
+ * @description: 将父组件向子组件的注册事件注册到子组件的实例中
+ * @param {*}
+ * @return {*}
+ * @Date: 2021-03-05 15:18:18
+ */
 export function updateComponentListeners (
   vm: Component,
   listeners: Object,

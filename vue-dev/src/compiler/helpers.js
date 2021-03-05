@@ -65,7 +65,16 @@ function prependModifierMarker (symbol: string, name: string, dynamic?: boolean)
     ? `_p(${name},"${symbol}")`
     : symbol + name // mark the event as captured
 }
-
+/**
+ * @description: 
+ * 根据modifier修饰符对时间名name做处理  
+ * 根据native判断是浏览器原生事件还是自定义事件 
+ * 分别对应el.nativeEvents和el.events 
+ * 最后根据name对事件进行归类 把回调函数的字符串保留到对应事件中
+ * @param {*}
+ * @return {*}
+ * @Date: 2021-03-05 13:34:08
+ */
 export function addHandler (
   el: ASTElement,
   name: string,
@@ -109,17 +118,23 @@ export function addHandler (
   }
 
   // check capture modifier
+  // 判断是否有capture修饰符
   if (modifiers.capture) {
     delete modifiers.capture
+    // name前加！标记capture
     name = prependModifierMarker('!', name, dynamic)
   }
+  //判断once修饰符
   if (modifiers.once) {
     delete modifiers.once
+    // name前加~标记once
     name = prependModifierMarker('~', name, dynamic)
   }
   /* istanbul ignore if */
+  // 判断是否有passive修饰符
   if (modifiers.passive) {
     delete modifiers.passive
+    // name前加&标记passive修饰符
     name = prependModifierMarker('&', name, dynamic)
   }
 

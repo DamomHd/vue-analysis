@@ -3,7 +3,7 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditTime: 2021-01-21 14:06:27
+ * @LastEditTime: 2021-03-05 12:02:16
  * @description: Vue生命周期
  */
 /* @flow */
@@ -43,14 +43,15 @@ export function initLifecycle(vm: Component) {
   // locate first non-abstract parent
   let parent = options.parent;
   if (parent && !options.abstract) {
+      //如果当前组件不少抽象组件 并且存在父级 向上循环父级
     while (parent.$options.abstract && parent.$parent) {
-      parent = parent.$parent;
+      parent = parent.$parent; //子组件在$parent访问父组件实例 
     }
-    parent.$children.push(vm);
+    parent.$children.push(vm); //在父组件也能找到子组件实例
   }
 
   vm.$parent = parent;
-  vm.$root = parent ? parent.$root : vm;
+  vm.$root = parent ? parent.$root : vm; //确认祖先  如果父级有祖先则也是自身祖先 如果没有父级 则自身为根祖先
 
   vm.$children = [];
   vm.$refs = {};

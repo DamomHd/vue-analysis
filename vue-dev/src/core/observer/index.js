@@ -3,8 +3,8 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditors: vincent_Huanghd@126.com
- * @LastEditTime: 2020-11-17 17:39:18
+ * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2021-03-05 17:09:12
  * @description: 数据监听相关源码
  */
 /* @flow */
@@ -30,9 +30,15 @@ const arrayKeys = Object.getOwnPropertyNames(arrayMethods);
 /**
  * In some cases we may want to disable observation inside a component's
  * update computation.
+ * 决定数据是否是响应式
  */
 export let shouldObserve: boolean = true;
-
+/**
+ * @description: 切换响应式开关
+ * @param {*} value
+ * @return {*}
+ * @Date: 2021-03-05 17:09:02
+ */
 export function toggleObserving(value: boolean) {
   shouldObserve = value;
 }
