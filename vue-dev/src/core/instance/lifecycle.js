@@ -3,7 +3,7 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditTime: 2021-03-05 12:02:16
+ * @LastEditTime: 2021-03-06 20:27:26
  * @description: Vue生命周期
  */
 /* @flow */
@@ -105,20 +105,27 @@ export function lifecycleMixin(Vue: Class<Component>) {
       vm._watcher.update();
     }
   };
-  // 销毁destroy
+  /**
+   * @description: 销毁destroy
+   * @param {*}
+   * @return {*}
+   */
   Vue.prototype.$destroy = function () {
     const vm: Component = this;
     if (vm._isBeingDestroyed) {
       return;
     }
     callHook(vm, "beforeDestroy");
-    vm._isBeingDestroyed = true;
+    vm._isBeingDestroyed = true; //设置当前实例正在销毁阶段
     // remove self from parent
     const parent = vm.$parent;
+    //当前实例的父实例存在且没被销毁并且不是抽象组件 
     if (parent && !parent._isBeingDestroyed && !vm.$options.abstract) {
+      // 将当前实例从父组件$children中 移除
       remove(parent.$children, vm);
     }
     // teardown watchers
+    // 实例从其他数据依赖列表中删除
     if (vm._watcher) {
       vm._watcher.teardown();
     }
@@ -128,14 +135,18 @@ export function lifecycleMixin(Vue: Class<Component>) {
     }
     // remove reference from data ob
     // frozen object may not have observer.
+    // 移除实例内响应式数据的引用 
     if (vm._data.__ob__) {
       vm._data.__ob__.vmCount--;
     }
-    // call the last hook...
+    // call the last hook... 
+    // 已销毁标识
     vm._isDestroyed = true;
     // invoke destroy hooks on current rendered tree
+    // 实例vnode设置为null 再进行patch更新
     vm.__patch__(vm._vnode, null);
     // fire destroyed hook
+    // 触发destroyed
     callHook(vm, "destroyed");
     // turn off all instance listeners.
     vm.$off();
@@ -149,14 +160,21 @@ export function lifecycleMixin(Vue: Class<Component>) {
     }
   };
 }
-// 组件挂载
+// 
+/**
+ * @description: 组件挂载  挂载阶段
+ * @param {*}
+ * @return {*}
+ */
 export function mountComponent(
   vm: Component,
   el: ?Element,
   hydrating?: boolean
 ): Component {
   vm.$el = el;
+  //不存在渲染函数
   if (!vm.$options.render) {
+    //创建注释类VNode节点
     vm.$options.render = createEmptyVNode;
     if (process.env.NODE_ENV !== "production") {
       /* istanbul ignore if */
@@ -179,6 +197,7 @@ export function mountComponent(
       }
     }
   }
+  //触发钩子
   callHook(vm, "beforeMount");
 
   let updateComponent;
@@ -191,17 +210,19 @@ export function mountComponent(
       const endTag = `vue-perf-end:${id}`;
 
       mark(startTag);
+      //得到最新VNode节点树 
       const vnode = vm._render();
       mark(endTag);
       measure(`vue ${name} render`, startTag, endTag);
 
       mark(startTag);
+      // 与上一次渲染旧节点对比并更新  patch操作 完成一次渲染
       vm._update(vnode, hydrating);
       mark(endTag);
       measure(`vue ${name} patch`, startTag, endTag);
     };
   } else {
-    // 更新
+    // 更新 与上一次渲染旧节点对比并更新  patch操作 完成一次渲染
     updateComponent = () => {
       vm._update(vm._render(), hydrating);
     };

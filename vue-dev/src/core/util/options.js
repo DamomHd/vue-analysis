@@ -421,10 +421,11 @@ export function mergeOptions (
   if (typeof child === 'function') {
     child = child.options
   }
-
+  // 合并属性将props选项数据进行规范化
   normalizeProps(child, vm)
   // 合并属性将inject选项数据规范化
   normalizeInject(child, vm)
+  // 合并属性将directives选项数据规范化
   normalizeDirectives(child)
 
   // Apply extends and mixins on the child options,

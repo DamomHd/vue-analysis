@@ -3,7 +3,7 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditTime: 2020-11-19 10:58:57
+ * @LastEditTime: 2021-02-28 18:13:40
  * @description: 
  */
 import { initMixin } from './init'
@@ -22,7 +22,7 @@ function Vue (options) {
   this._init(options)
 }
 
-initMixin(Vue) //初始化Mixin
+initMixin(Vue) //初始化Mixin 给原型绑定_init方法
 stateMixin(Vue) 
 eventsMixin(Vue)
 lifecycleMixin(Vue)
