@@ -49,14 +49,19 @@ export function generate (
   options: CompilerOptions
 ): CodegenResult {
   const state = new CodegenState(options)
-  // ast不为空调用genElement 否则船舰一个空的元素型VNode
+  // ast不为空调用genElement 否则创建一个空的元素型VNode
   const code = ast ? genElement(ast, state) : '_c("div")'
   return {
     render: `with(this){return ${code}}`,
     staticRenderFns: state.staticRenderFns
   }
 }
-
+/**
+ * @description: 根据当前AST元素节点不同执行不同的代码生成函数  元素节点、文本节点、注释节点
+ * @param {*} el
+ * @param {*} state
+ * @return {*}
+ */
 export function genElement (el: ASTElement, state: CodegenState): string {
   if (el.parent) {
     el.pre = el.pre || el.parent.pre
@@ -126,7 +131,7 @@ function genStatic (el: ASTElement, state: CodegenState): string {
 
 // v-once
 /**
- * @description: 只渲染元素喝组件一次 之后视为静态节点
+ * @description: 只渲染元素和组件一次 之后视为静态节点
  * @param {*} el
  * @param {*} state
  * @return {*}

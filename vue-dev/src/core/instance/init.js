@@ -42,7 +42,7 @@ export function initMixin (Vue: Class<Component>) {
       //
       initInternalComponent(vm, options)
     } else {
-      //合并配置
+      //合并配置属性
       vm.$options = mergeOptions(
         resolveConstructorOptions(vm.constructor),
         options || {},

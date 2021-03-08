@@ -3,8 +3,8 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
- * @LastEditors: vincent_Huanghd@126.com
- * @LastEditTime: 2020-11-17 16:52:33
+ * @LastEditors: Damom
+ * @LastEditTime: 2021-03-06 18:40:18
  * @description: Watcher类
  */
 /* @flow */
@@ -175,6 +175,7 @@ export default class Watcher {
    */
   update () {
     /* istanbul ignore else */
+    // 计算属性中初始化传入lazy true
     if (this.lazy) {
       this.dirty = true
     } else if (this.sync) {
