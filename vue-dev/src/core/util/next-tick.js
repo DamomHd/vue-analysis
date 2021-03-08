@@ -11,9 +11,11 @@ const callbacks = []
 let pending = false
 
 function flushCallbacks () {
-  pending = false
+  pending = false  //重置锁
+  // 防止其中再包含nexttick出问题 复制备份 并清空队列
   const copies = callbacks.slice(0)
   callbacks.length = 0
+  // 遍历执行回调
   for (let i = 0; i < copies.length; i++) {
     copies[i]()
   }
@@ -39,6 +41,8 @@ let timerFunc
 // completely stops working after triggering a few times... so, if native
 // Promise is available, we will use it:
 /* istanbul ignore next, $flow-disable-line */
+// 能力检测部分  优先微任务 =》 宏任务
+// promise检测
 if (typeof Promise !== 'undefined' && isNative(Promise)) {
   const p = Promise.resolve()
   timerFunc = () => {
@@ -51,7 +55,9 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     if (isIOS) setTimeout(noop)
   }
   isUsingMicroTask = true
-} else if (!isIE && typeof MutationObserver !== 'undefined' && (
+} 
+// MutationObserver 检测
+else if (!isIE && typeof MutationObserver !== 'undefined' && (
   isNative(MutationObserver) ||
   // PhantomJS and iOS 7.x
   MutationObserver.toString() === '[object MutationObserverConstructor]'
@@ -70,22 +76,33 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
     textNode.data = String(counter)
   }
   isUsingMicroTask = true
-} else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
+} 
+// setImmediate 检测
+else if (typeof setImmediate !== 'undefined' && isNative(setImmediate)) {
   // Fallback to setImmediate.
   // Technically it leverages the (macro) task queue,
   // but it is still a better choice than setTimeout.
   timerFunc = () => {
     setImmediate(flushCallbacks)
   }
-} else {
+} 
+// 降级 setTimeOut(fn,0)
+else {
   // Fallback to setTimeout.
   timerFunc = () => {
     setTimeout(flushCallbacks, 0)
   }
 }
-
+/**
+ * @description: 将回调延迟到下次DOM更新循环之后址姓
+ * @param {*} cb
+ * @param {*} ctx
+ * @return {*}
+ * @Date: 2021-03-08 17:50:31
+ */
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+  // push回调函数
   callbacks.push(() => {
     if (cb) {
       try {
@@ -97,11 +114,13 @@ export function nextTick (cb?: Function, ctx?: Object) {
       _resolve(ctx)
     }
   })
+  // 异步false  上锁后调用异步函数 等同步函数执行后 执行回调函数队列
   if (!pending) {
     pending = true
     timerFunc()
   }
-  // $flow-disable-line
+  // $flow-disable-line 
+  // 无提供回调并支持promise则返回一个promise
   if (!cb && typeof Promise !== 'undefined') {
     return new Promise(resolve => {
       _resolve = resolve

@@ -4,7 +4,7 @@
  * @Author: hongda_huang
  * @Date: 2020-11-17 11:26:33
  * @LastEditors: Please set LastEditors
- * @LastEditTime: 2021-03-05 17:09:12
+ * @LastEditTime: 2021-03-08 16:49:04
  * @description: 数据监听相关源码
  */
 /* @flow */
@@ -234,8 +234,17 @@ export function defineReactive(
  * triggers change notification if the property doesn't
  * already exist.
  */
+/**
+ * @description: vm.$set Vue.set方法 向响应式对象添加属性 并确保同为响应式
+ * @param {*} target
+ * @param {*} key
+ * @param {*} val
+ * @return {*}
+ * @Date: 2021-03-08 16:21:14
+ */
 export function set(target: Array<any> | Object, key: any, val: any): any {
-  if (
+  //开发环境判断target是否为undefined或者null或原始类型。是则抛错
+    if (
     process.env.NODE_ENV !== "production" &&
     (isUndef(target) || isPrimitive(target))
   ) {
@@ -243,16 +252,23 @@ export function set(target: Array<any> | Object, key: any, val: any): any {
       `Cannot set reactive property on undefined, null, or primitive value: ${(target: any)}`
     );
   }
+
+  // 判断target为数组并且索引有效
   if (Array.isArray(target) && isValidArrayIndex(key)) {
+    // 取两者索引最大值作为最终结果的length
     target.length = Math.max(target.length, key);
+    // 调用经过重写的splice 数组变响应式  
     target.splice(key, 1, val);
     return val;
   }
+  // 判断target为对象并且key有效 有效非新增属性 
   if (key in target && !(key in Object.prototype)) {
     target[key] = val;
     return val;
   }
+  // 判断传入值是否是响应式数据
   const ob = (target: any).__ob__;
+  // 如果target是Vue实例 或者 是Vue实例的根数据对象 抛异常
   if (target._isVue || (ob && ob.vmCount)) {
     process.env.NODE_ENV !== "production" &&
       warn(
@@ -261,17 +277,27 @@ export function set(target: Array<any> | Object, key: any, val: any): any {
       );
     return val;
   }
+  // 非响应式数据 直接修改 返回
   if (!ob) {
     target[key] = val;
     return val;
   }
+  // 对象为响应式数据   defineReactive将新属性添加到target上 并转为响应式
   defineReactive(ob.value, key, val);
+  // 通知依赖更新
   ob.dep.notify();
   return val;
 }
 
 /**
  * Delete a property and trigger change if necessary.
+ */
+/**
+ * @description: vm.$delete  Vue.delete
+ * @param {*} target
+ * @param {*} key
+ * @return {*}
+ * @Date: 2021-03-08 16:45:41
  */
 export function del(target: Array<any> | Object, key: any) {
   if (
@@ -282,6 +308,7 @@ export function del(target: Array<any> | Object, key: any) {
       `Cannot delete reactive property on undefined, null, or primitive value: ${(target: any)}`
     );
   }
+  // target数组且索引有效 直接调用splice进行删除且转为响应式
   if (Array.isArray(target) && isValidArrayIndex(key)) {
     target.splice(key, 1);
     return;
@@ -295,13 +322,17 @@ export function del(target: Array<any> | Object, key: any) {
       );
     return;
   }
+  // 如果对象中传入键名不存在 直接true
   if (!hasOwn(target, key)) {
     return;
   }
+  // 否则直接删除属性
   delete target[key];
+  // 如果非响应式的 直接return
   if (!ob) {
     return;
   }
+  // 否则响应式的 通知依赖更新
   ob.dep.notify();
 }
 

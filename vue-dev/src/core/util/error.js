@@ -1,3 +1,11 @@
+/*
+ * @Descripttion: Damom
+ * @version: v1.0
+ * @Author: hongda_huang
+ * @Date: 2020-11-20 16:54:29
+ * @LastEditTime: 2021-03-08 17:20:07
+ * @description: 
+ */
 /* @flow */
 
 import config from '../config'
@@ -42,11 +50,13 @@ export function invokeWithErrorHandling (
 ) {
   let res
   try {
+      // 执行回调 附加参数给回调
     res = args ? handler.apply(context, args) : handler.call(context)
     if (res && !res._isVue && isPromise(res) && !res._handled) {
       res.catch(e => handleError(e, vm, info + ` (Promise/async)`))
       // issue #9511
       // avoid catch triggering multiple times when nested calls
+      // 避免handleError函数报多次
       res._handled = true
     }
   } catch (e) {

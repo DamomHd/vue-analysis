@@ -276,10 +276,11 @@ export function genData (el: ASTElement, state: CodegenState): string {
   if (el.props) {
     data += `domProps:${genProps(el.props)},`
   }
-  // event handlers
+  // event handlers 自定义事件
   if (el.events) {
     data += `${genHandlers(el.events, false)},`
   }
+  //浏览器原生事件
   if (el.nativeEvents) {
     data += `${genHandlers(el.nativeEvents, true)},`
   }

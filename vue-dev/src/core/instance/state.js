@@ -343,9 +343,15 @@ export function stateMixin (Vue: Class<Component>) {
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 
+  // 扩展 $set $delete $watch方法
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
-
+  /**
+   * @description: 
+   * @param {*}
+   * @return {*}
+   * @Date: 2021-03-08 14:04:03
+   */
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,
@@ -353,11 +359,13 @@ export function stateMixin (Vue: Class<Component>) {
   ): Function {
     const vm: Component = this
     if (isPlainObject(cb)) {
+      // 传入的cb回调是个对象 则调用createWatcher =》拆解 options和handler 再重新调用vm.$watch 
       return createWatcher(vm, expOrFn, cb, options)
     }
     options = options || {}
-    options.user = true
+    options.user = true // 标识此watch为用户手动 创建的 而非Vue内部创建的watcher实例
     const watcher = new Watcher(vm, expOrFn, cb, options)
+    // immediate 首次执行 立即触发回调
     if (options.immediate) {
       try {
         cb.call(vm, watcher.value)
@@ -365,6 +373,7 @@ export function stateMixin (Vue: Class<Component>) {
         handleError(error, vm, `callback for immediate watcher "${watcher.expression}"`)
       }
     }
+    // 返回一个取消观察的函数 用于停止触发回调
     return function unwatchFn () {
       watcher.teardown()
     }

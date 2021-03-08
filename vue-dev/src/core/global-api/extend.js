@@ -17,10 +17,17 @@ export function initExtend (Vue: GlobalAPI) {
    * Class inheritance
    * Vue子类
    */
+  /**
+   * @description: extend
+   * @param {*}
+   * @return {*}
+   * @Date: 2021-03-08 18:11:15
+   */
   Vue.extend = function (extendOptions: Object): Function {
     extendOptions = extendOptions || {}
-    const Super = this
-    const SuperId = Super.cid
+    const Super = this  //指向基础Vue类
+    const SuperId = Super.cid  //类的唯一表示
+    // 缓存池  缓存创建的类
     const cachedCtors = extendOptions._Ctor || (extendOptions._Ctor = {})
     //如果缓存中存在 则直接返回缓存中的Sub 不存在 则重新定义 最终缓存起来
     if (cachedCtors[SuperId]) {
@@ -36,13 +43,16 @@ export function initExtend (Vue: GlobalAPI) {
       //Vue实例初始化
       this._init(options)
     }
+    // 父类原型继承到子类 并添加唯一表示cid
     Sub.prototype = Object.create(Super.prototype)
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
+    // 合并父子类option 
     Sub.options = mergeOptions(
       Super.options,
       extendOptions
     )
+    // 父类保存到子类 确保可访问父类
     Sub['super'] = Super
 
     // For props and computed properties, we define the proxy getters on
@@ -64,6 +74,7 @@ export function initExtend (Vue: GlobalAPI) {
 
     // create asset registers, so extended classes
     // can have their private assets too.
+    // 复制 component direactive filter到子类
     ASSET_TYPES.forEach(function (type) {
       Sub[type] = Super[type]
     })
@@ -75,6 +86,7 @@ export function initExtend (Vue: GlobalAPI) {
     // keep a reference to the super options at extension time.
     // later at instantiation we can check if Super's options have
     // been updated.
+    // 添加三个独有的属性 父类无 子类有
     Sub.superOptions = Super.options
     Sub.extendOptions = extendOptions
     Sub.sealedOptions = extend({}, Sub.options)
