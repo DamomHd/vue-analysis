@@ -3,7 +3,7 @@
  * @version: v1.0
  * @Author: hongda_huang
  * @Date: 2020-11-20 16:54:29
- * @LastEditTime: 2021-03-05 15:18:21
+ * @LastEditTime: 2021-03-08 17:41:25
  * @description: initEvent 初始化事件中心 实际上是初始化父组件在模板中使用的v-on 或者@注册的监听子组件内触发的事件
  * 因为父组件给子组件的注册时间中，吧自定义事件传给了子组件，在子组件的实例化的时候才进行初始化。而浏览器原生事件是在父组件里处理的
  */
@@ -64,16 +64,30 @@ export function updateComponentListeners (
   updateListeners(listeners, oldListeners || {}, add, remove, createOnceHandler, vm)
   target = undefined
 }
-
+/**
+ * @description: 依赖注入mixin
+ * @param {*} Vue
+ * @return {*}
+ * @Date: 2021-03-08 17:08:41
+ */
 export function eventsMixin (Vue: Class<Component>) {
   const hookRE = /^hook:/
+
+  /**
+   * @description: 全局on方法 
+   * @param {event} 订阅事件名
+   * @return {fn} 回调函数
+   * @Date: 2021-03-08 17:09:46
+   */
   Vue.prototype.$on = function (event: string | Array<string>, fn: Function): Component {
     const vm: Component = this
+    // 数组一次性订阅多个
     if (Array.isArray(event)) {
       for (let i = 0, l = event.length; i < l; i++) {
         vm.$on(event[i], fn)
       }
     } else {
+        // 判断当前实例上是否有对应事件 无则赋空 再push进去回调函数
       (vm._events[event] || (vm._events[event] = [])).push(fn)
       // optimize hook:event cost by using a boolean flag marked at registration
       // instead of a hash lookup
@@ -83,7 +97,12 @@ export function eventsMixin (Vue: Class<Component>) {
     }
     return vm
   }
-
+  /**
+   * @description: 监听一次自定义事件 执行完移除
+   * @param {*}
+   * @return {*}
+   * @Date: 2021-03-08 17:41:10
+   */
   Vue.prototype.$once = function (event: string, fn: Function): Component {
     const vm: Component = this
     function on () {
@@ -94,15 +113,20 @@ export function eventsMixin (Vue: Class<Component>) {
     vm.$on(event, on)
     return vm
   }
-
+  /**
+   * @description: 移除自定义事件监听
+   * @param {*}
+   * @return {*}
+   * @Date: 2021-03-08 17:22:19
+   */
   Vue.prototype.$off = function (event?: string | Array<string>, fn?: Function): Component {
     const vm: Component = this
-    // all
+    // all 移除所有事件 
     if (!arguments.length) {
       vm._events = Object.create(null)
       return vm
     }
-    // array of events
+    // array of events 一次性移除所有事件。 循环关闭订阅
     if (Array.isArray(event)) {
       for (let i = 0, l = event.length; i < l; i++) {
         vm.$off(event[i], fn)
@@ -111,14 +135,16 @@ export function eventsMixin (Vue: Class<Component>) {
     }
     // specific event
     const cbs = vm._events[event]
+    // 无订阅此事件 直接返回
     if (!cbs) {
       return vm
     }
+    // 无回调函数移除所有监听器
     if (!fn) {
       vm._events[event] = null
       return vm
     }
-    // specific handler
+    // specific handler 传入了事件名 和 回调  cbs且存在
     let cb
     let i = cbs.length
     while (i--) {
@@ -145,6 +171,7 @@ export function eventsMixin (Vue: Class<Component>) {
         )
       }
     }
+    // 所有的回调函数
     let cbs = vm._events[event]
     if (cbs) {
       cbs = cbs.length > 1 ? toArray(cbs) : cbs

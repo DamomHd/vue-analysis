@@ -139,10 +139,12 @@ export function addHandler (
   }
 
   let events
+  // 原生事件
   if (modifiers.native) {
     delete modifiers.native
     events = el.nativeEvents || (el.nativeEvents = {})
   } else {
+    // 自定义事件
     events = el.events || (el.events = {})
   }
 
